@@ -120,13 +120,21 @@ app.post('/prestamos', (req, res) => {
   console.log('Datos recibidos:', req.body);
   const { cliente, fechaPrestamo, fechaPago, interes, valorPrestamo } = req.body;
 
-  if (!cliente || !cliente.id) {
+  if (!cliente) {
     return res.status(400).send('Cliente no proporcionado o ID de cliente faltante');
+  }
+
+  // Convierte las fechas de cadena a objeto Date
+  const fechaPrestamoDate = new Date(fechaPrestamo);
+  const fechaPagoDate = new Date(fechaPago);
+
+  if (isNaN(fechaPrestamoDate.getTime()) || isNaN(fechaPagoDate.getTime())) {
+    return res.status(400).send('Fechas inválidas');
   }
 
   db.run(
     "INSERT INTO prestamos (cliente_id, fecha_prestamo, fecha_pago, interes, valor_prestamo) VALUES (?, ?, ?, ?, ?)",
-    [cliente.id, fechaPrestamo.toISOString(), fechaPago.toISOString(), interes, valorPrestamo],
+    [cliente, fechaPrestamoDate.toISOString(), fechaPagoDate.toISOString(), interes, valorPrestamo],
     function(err) {
       if (err) return res.status(500).send('Error al registrar el préstamo');
       res.status(201).json({ id: this.lastID, cliente, fechaPrestamo, fechaPago, interes, valorPrestamo });
