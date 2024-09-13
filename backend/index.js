@@ -1,24 +1,34 @@
-
 const express = require('express');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
+const { swaggerUi, swaggerSpec } = require('./swagger');
 
 const app = express();
 const PORT = 5000;
 const JWT_SECRET = 'your_jwt_secret'; // Cambia esto por una clave secreta más segura
 
 app.use(bodyParser.json());
-app.use(cors()); // Esto permitirá todas las solicitudes CORS
+app.use(cors()); // Permite todas las solicitudes CORS
 
 // Configura la base de datos
 const db = new sqlite3.Database(':memory:'); // Cambia ':memory:' por el path de tu archivo de base de datos
 
-// Crea tablas de usuarios
+// Crea tablas de usuarios y clientes
 db.serialize(() => {
   db.run("CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT UNIQUE, password TEXT)");
+  db.run(`
+    CREATE TABLE clients (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      cedula TEXT UNIQUE,
+      nombres TEXT,
+      apellidos TEXT,
+      alias TEXT,
+      celular TEXT
+    )
+  `);
 });
 
 // Ruta para el registro de usuarios
@@ -36,43 +46,6 @@ app.post('/register', (req, res) => {
 });
 
 // Ruta para el inicio de sesión
-/**
- * @openapi
- * /clientes:
- *   post:
- *     summary: Registrar un nuevo cliente
- *     tags:
- *       - Clientes
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               cedula:
- *                 type: string
- *                 example: '123456789'
- *               nombres:
- *                 type: string
- *                 example: 'Juan'
- *               apellidos:
- *                 type: string
- *                 example: 'Pérez'
- *               alias:
- *                 type: string
- *                 example: 'jperez'
- *               celular:
- *                 type: string
- *                 example: '3001234567'
- *     responses:
- *       200:
- *         description: Cliente registrado exitosamente
- *       400:
- *         description: Error de validación
- *       500:
- *         description: Error en el servidor
- */
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
 
@@ -90,6 +63,28 @@ app.post('/login', (req, res) => {
   });
 });
 
+// Ruta para obtener todos los clientes
+app.get('/clientes', (req, res) => {
+  db.all("SELECT * FROM clients", (err, rows) => {
+    if (err) return res.status(500).send('Error al obtener los clientes');
+    res.json(rows);
+  });
+});
+
+// Ruta para registrar un nuevo cliente
+app.post('/clientes', (req, res) => {
+  const { cedula, nombres, apellidos, alias, celular } = req.body;
+
+  db.run(
+    "INSERT INTO clients (cedula, nombres, apellidos, alias, celular) VALUES (?, ?, ?, ?, ?)",
+    [cedula, nombres, apellidos, alias, celular],
+    function(err) {
+      if (err) return res.status(500).send('Error al registrar el cliente');
+      res.status(201).send('Cliente registrado');
+    }
+  );
+});
+
 // Ruta protegida de ejemplo
 app.get('/protected', (req, res) => {
   const token = req.headers['authorization'];
@@ -98,12 +93,9 @@ app.get('/protected', (req, res) => {
 
   jwt.verify(token, JWT_SECRET, (err, decoded) => {
     if (err) return res.status(401).send('Token inválido');
-
     res.send('Ruta protegida accedida');
   });
 });
-
-const { swaggerUi, swaggerSpec } = require('./swagger');
 
 // Configura Swagger-UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
