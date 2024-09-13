@@ -13,25 +13,33 @@ registerLocale('es', es);
 
 function PrestamosPage() {
   const [fechaPrestamo, setFechaPrestamo] = useState(new Date());
-  const [fechaPago, setFechaPago] = useState(new Date());
+  const [fechaPago, setFechaPago] = useState();
   const [interes, setInteres] = useState(0);
   const [valorPrestamo, setValorPrestamo] = useState('');
   const [clientes, setClientes] = useState([]);
-  const [clienteSeleccionado, setClienteSeleccionado] = useState('');
+  const [clienteSeleccionadoId, setClienteSeleccionadoId] = useState('');
   const [prestamos, setPrestamos] = useState([]); // Almacena los préstamos registrados
+  const [loading, setLoading] = useState(true);
+  const [clienteSeleccionado, setClienteSeleccionado] = useState('');
 
   useEffect(() => {
     const fetchClientes = async () => {
       try {
         const response = await axios.get('https://prestamos-app-veyf.vercel.app/clientes');
         setClientes(response.data);
+        setLoading(false);
       } catch (err) {
         console.error('Error al cargar clientes', err);
+        setLoading(false);
       }
     };
-
+  
     fetchClientes();
   }, []);
+  
+  if (loading) {
+    return <div>Cargando...</div>;
+  }
 
   const calcularFechaPago = (date) => {
     if (date) {
@@ -43,14 +51,26 @@ function PrestamosPage() {
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    console.log('ID del cliente seleccionado:', clienteSeleccionadoId);
+    console.log('Clientes disponibles:', clientes);
+  
+    // Encuentra el cliente basado en el ID seleccionado
+    const clienteSeleccionado = clientes.find(cliente => cliente.id === clienteSeleccionadoId);
+
+    if (!clienteSeleccionado) {
+      // Si no se encuentra el cliente, muestra un mensaje de error y detiene el envío
+      console.error('Cliente no encontrado o ID de cliente inválido');
+      return;
+    }
 
     const nuevoPrestamo = {
-      cliente: clientes.find((cliente) => cliente.id === clienteSeleccionado),
-      fechaPrestamo,
-      fechaPago,
+      cliente: clienteSeleccionadoId, // Enviar solo el ID del cliente como string
+      fechaPrestamo: fechaPrestamo.toISOString(), // Convertir la fecha a formato ISO 8601
+      fechaPago: fechaPago.toISOString(), // Convertir la fecha a formato ISO 8601
       interes,
       valorPrestamo,
     };
+
     // Llama a la API para guardar el nuevo préstamo
     axios
       .post('https://prestamos-app-veyf.vercel.app/prestamos', nuevoPrestamo)
@@ -62,7 +82,7 @@ function PrestamosPage() {
         setFechaPago(new Date());
         setInteres(0);
         setValorPrestamo('');
-        setClienteSeleccionado('');
+        setClienteSeleccionadoId('');
       })
       .catch((error) => {
         console.error('Error al registrar el préstamo', error);
@@ -71,6 +91,11 @@ function PrestamosPage() {
 
   // Columnas para el DataTable
   const columns = [
+    {
+      name: 'Cédula',
+      selector: (row) => row.cliente.cedula,
+      sortable: true,
+    },
     {
       name: 'Cliente',
       selector: (row) => `${row.cliente.nombres} ${row.cliente.apellidos}`,
@@ -108,9 +133,8 @@ function PrestamosPage() {
             as="select"
             value={clienteSeleccionado}
             onChange={(e) => setClienteSeleccionado(e.target.value)}
-            className="responsive-input"
           >
-            <option value="">Seleccionar cliente</option>
+            <option>Seleccionar cliente</option>
             {clientes.map((cliente) => (
               <option key={cliente.id} value={cliente.id}>
                 {cliente.nombres} {cliente.apellidos}

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Button, Table, Alert } from 'react-bootstrap';
+import { Form, Button, Alert } from 'react-bootstrap';
 import axios from 'axios';
+import DataTable from 'react-data-table-component'; // Importa la biblioteca para datatables
+import './styles/ClientesPage.css'; // Archivo CSS para estilos personalizados
 
 function ClientesPage() {
   const [cedula, setCedula] = useState('');
@@ -50,87 +52,110 @@ function ClientesPage() {
     }
   };
 
+  // Columnas para el DataTable
+  const columns = [
+    {
+      name: 'ID',
+      selector: (row) => row.id,
+      sortable: true,
+    },
+    {
+      name: 'Cédula',
+      selector: (row) => row.cedula,
+      sortable: true,
+    },
+    {
+      name: 'Nombres',
+      selector: (row) => row.nombres,
+      sortable: true,
+    },
+    {
+      name: 'Apellidos',
+      selector: (row) => row.apellidos,
+      sortable: true,
+    },
+    {
+      name: 'Alias',
+      selector: (row) => row.alias,
+      sortable: true,
+    },
+    {
+      name: 'Celular',
+      selector: (row) => row.celular,
+      sortable: true,
+    },
+  ];
+
   return (
-    <div>
+    <div className="clientes-container">
       <h2>Registro de Clientes</h2>
       <Form onSubmit={handleSubmit}>
-        <Form.Group controlId="formCédula">
+        <Form.Group controlId="formCedula">
           <Form.Label>Cédula</Form.Label>
           <Form.Control
             type="text"
-            placeholder="Enter cédula"
+            placeholder="Ingrese cédula"
             value={cedula}
             onChange={(e) => setCedula(e.target.value)}
+            className="responsive-input"
           />
         </Form.Group>
         <Form.Group controlId="formNombres">
           <Form.Label>Nombres</Form.Label>
           <Form.Control
             type="text"
-            placeholder="Enter nombres"
+            placeholder="Ingrese nombres"
             value={nombres}
             onChange={(e) => setNombres(e.target.value)}
+            className="responsive-input"
           />
         </Form.Group>
         <Form.Group controlId="formApellidos">
           <Form.Label>Apellidos</Form.Label>
           <Form.Control
             type="text"
-            placeholder="Enter apellidos"
+            placeholder="Ingrese apellidos"
             value={apellidos}
             onChange={(e) => setApellidos(e.target.value)}
+            className="responsive-input"
           />
         </Form.Group>
         <Form.Group controlId="formAlias">
           <Form.Label>Alias</Form.Label>
           <Form.Control
             type="text"
-            placeholder="Enter alias"
+            placeholder="Ingrese alias"
             value={alias}
             onChange={(e) => setAlias(e.target.value)}
+            className="responsive-input"
           />
         </Form.Group>
         <Form.Group controlId="formCelular">
           <Form.Label>Celular</Form.Label>
           <Form.Control
             type="text"
-            placeholder="Enter celular"
+            placeholder="Ingrese celular"
             value={celular}
             onChange={(e) => setCelular(e.target.value)}
+            className="responsive-input"
           />
         </Form.Group>
-        <Button variant="primary" type="submit">
+        <Button variant="primary" type="submit" className="animated-button">
           Registrar
         </Button>
         {error && <Alert variant="danger" className="mt-3">{error}</Alert>}
         {success && <Alert variant="success" className="mt-3">{success}</Alert>}
       </Form>
 
-      {/* Display the list of clients here */}
-      <Table striped bordered hover className="mt-3">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Cédula</th>
-            <th>Nombres</th>
-            <th>Apellidos</th>
-            <th>Alias</th>
-            <th>Celular</th>
-          </tr>
-        </thead>
-        <tbody>
-          {clientes.map((cliente) => (
-            <tr key={cliente.id}>
-              <td>{cliente.id}</td>
-              <td>{cliente.cedula}</td>
-              <td>{cliente.nombres}</td>
-              <td>{cliente.apellidos}</td>
-              <td>{cliente.alias}</td>
-              <td>{cliente.celular}</td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
+      <h3>Lista de Clientes Registrados</h3>
+      <DataTable
+        columns={columns}
+        data={clientes}
+        pagination
+        highlightOnHover
+        striped
+        className="mt-3"
+      />
     </div>
   );
 }
