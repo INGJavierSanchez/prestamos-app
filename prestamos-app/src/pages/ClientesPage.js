@@ -16,7 +16,7 @@ function ClientesPage() {
     // Fetch the list of clients when the component mounts
     const fetchClientes = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/clientes');
+        const response = await axios.get('https://prestamos-app-veyf.vercel.app/clientes');
         setClientes(response.data);
       } catch (err) {
         console.error(err);
