@@ -16,7 +16,7 @@ app.use(cors()); // Permite todas las solicitudes CORS
 // Configura la base de datos
 const db = new sqlite3.Database(':memory:'); // Cambia ':memory:' por el path de tu archivo de base de datos
 
-// Crea tablas de usuarios y clientes
+// Crea tablas de usuarios, clientes, préstamos y pagos
 db.serialize(() => {
   db.run("CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT UNIQUE, password TEXT)");
   db.run(`
@@ -27,6 +27,26 @@ db.serialize(() => {
       apellidos TEXT,
       alias TEXT,
       celular TEXT
+    )
+  `);
+  db.run(`
+    CREATE TABLE prestamos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      cliente_id INTEGER,
+      fecha_prestamo TEXT,
+      fecha_pago TEXT,
+      interes REAL,
+      valor_prestamo REAL,
+      FOREIGN KEY(cliente_id) REFERENCES clients(id)
+    )
+  `);
+  db.run(`
+    CREATE TABLE pagos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      prestamo_id INTEGER,
+      fecha_pago TEXT,
+      monto REAL,
+      FOREIGN KEY(prestamo_id) REFERENCES prestamos(id)
     )
   `);
 });
@@ -95,25 +115,12 @@ app.post('/clientes', (req, res) => {
   });
 });
 
-// Ruta protegida de ejemplo
-app.get('/protected', (req, res) => {
-  const token = req.headers['authorization'];
-
-  if (!token) return res.status(401).send('Token requerido');
-
-  jwt.verify(token, JWT_SECRET, (err, decoded) => {
-    if (err) return res.status(401).send('Token inválido');
-    res.send('Ruta protegida accedida');
-  });
-});
-
-
 // Ruta para registrar un nuevo préstamo
 app.post('/prestamos', (req, res) => {
-
   const { cliente, fechaPrestamo, fechaPago, interes, valorPrestamo } = req.body;
-console.log('Datos recibidos:', req.body);
-  // Inserta el nuevo préstamo (ajusta según tu esquema de base de datos)
+  console.log('Datos recibidos:', req.body);
+  
+  // Inserta el nuevo préstamo
   db.run(
     "INSERT INTO prestamos (cliente_id, fecha_prestamo, fecha_pago, interes, valor_prestamo) VALUES (?, ?, ?, ?, ?)",
     [cliente.id, fechaPrestamo.toISOString(), fechaPago.toISOString(), interes, valorPrestamo],
@@ -128,6 +135,30 @@ console.log('Datos recibidos:', req.body);
 app.get('/prestamos', (req, res) => {
   db.all("SELECT * FROM prestamos", (err, rows) => {
     if (err) return res.status(500).send('Error al obtener los préstamos');
+    res.json(rows);
+  });
+});
+
+// Ruta para registrar un nuevo pago
+app.post('/pagos', (req, res) => {
+  const { prestamo_id, fechaPago, monto } = req.body;
+  console.log('Datos recibidos:', req.body);
+  
+  // Inserta el nuevo pago
+  db.run(
+    "INSERT INTO pagos (prestamo_id, fecha_pago, monto) VALUES (?, ?, ?)",
+    [prestamo_id, fechaPago.toISOString(), monto],
+    function(err) {
+      if (err) return res.status(500).send('Error al registrar el pago');
+      res.status(201).json({ id: this.lastID, prestamo_id, fechaPago, monto });
+    }
+  );
+});
+
+// Ruta para obtener todos los pagos
+app.get('/pagos', (req, res) => {
+  db.all("SELECT * FROM pagos", (err, rows) => {
+    if (err) return res.status(500).send('Error al obtener los pagos');
     res.json(rows);
   });
 });
