@@ -124,6 +124,14 @@ console.log('Datos recibidos:', req.body);
   );
 });
 
+// Ruta para obtener todos los préstamos
+app.get('/prestamos', (req, res) => {
+  db.all("SELECT * FROM prestamos", (err, rows) => {
+    if (err) return res.status(500).send('Error al obtener los préstamos');
+    res.json(rows);
+  });
+});
+
 // Configura Swagger-UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
