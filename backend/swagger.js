@@ -17,7 +17,7 @@ const swaggerOptions = {
       },
     ],
   },
-  apis: ['./server.js'], // Indica donde se encuentran tus archivos de rutas
+  apis: ['./app/index.js'], // Indica donde se encuentran tus archivos de rutas
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
