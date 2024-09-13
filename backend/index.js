@@ -75,14 +75,24 @@ app.get('/clientes', (req, res) => {
 app.post('/clientes', (req, res) => {
   const { cedula, nombres, apellidos, alias, celular } = req.body;
 
-  db.run(
-    "INSERT INTO clients (cedula, nombres, apellidos, alias, celular) VALUES (?, ?, ?, ?, ?)",
-    [cedula, nombres, apellidos, alias, celular],
-    function(err) {
-      if (err) return res.status(500).send('Error al registrar el cliente');
-      res.status(201).send('Cliente registrado');
+  // Verifica si la cédula ya existe
+  db.get("SELECT * FROM clients WHERE cedula = ?", [cedula], (err, existingClient) => {
+    if (err) return res.status(500).send('Error al verificar la cédula');
+
+    if (existingClient) {
+      return res.status(400).send('La cédula ya está registrada');
     }
-  );
+
+    // Inserta el nuevo cliente
+    db.run(
+      "INSERT INTO clients (cedula, nombres, apellidos, alias, celular) VALUES (?, ?, ?, ?, ?)",
+      [cedula, nombres, apellidos, alias, celular],
+      function(err) {
+        if (err) return res.status(500).send('Error al registrar el cliente');
+        res.status(201).send('Cliente registrado');
+      }
+    );
+  });
 });
 
 // Ruta protegida de ejemplo
@@ -95,6 +105,23 @@ app.get('/protected', (req, res) => {
     if (err) return res.status(401).send('Token inválido');
     res.send('Ruta protegida accedida');
   });
+});
+
+
+// Ruta para registrar un nuevo préstamo
+app.post('/prestamos', (req, res) => {
+
+  const { cliente, fechaPrestamo, fechaPago, interes, valorPrestamo } = req.body;
+console.log('Datos recibidos:', req.body);
+  // Inserta el nuevo préstamo (ajusta según tu esquema de base de datos)
+  db.run(
+    "INSERT INTO prestamos (cliente_id, fecha_prestamo, fecha_pago, interes, valor_prestamo) VALUES (?, ?, ?, ?, ?)",
+    [cliente.id, fechaPrestamo.toISOString(), fechaPago.toISOString(), interes, valorPrestamo],
+    function(err) {
+      if (err) return res.status(500).send('Error al registrar el préstamo');
+      res.status(201).json({ id: this.lastID, cliente, fechaPrestamo, fechaPago, interes, valorPrestamo });
+    }
+  );
 });
 
 // Configura Swagger-UI
