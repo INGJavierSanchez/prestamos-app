@@ -13,7 +13,6 @@ function ClientesPage() {
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    // Fetch the list of clients when the component mounts
     const fetchClientes = async () => {
       try {
         const response = await axios.get('https://prestamos-app-veyf.vercel.app/clientes');
