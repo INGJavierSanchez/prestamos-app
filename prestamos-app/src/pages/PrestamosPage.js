@@ -51,7 +51,6 @@ function PrestamosPage() {
       interes,
       valorPrestamo,
     };
-
     // Llama a la API para guardar el nuevo préstamo
     axios
       .post('https://prestamos-app-veyf.vercel.app/prestamos', nuevoPrestamo)
