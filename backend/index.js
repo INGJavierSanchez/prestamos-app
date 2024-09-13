@@ -117,10 +117,13 @@ app.post('/clientes', (req, res) => {
 
 // Ruta para registrar un nuevo préstamo
 app.post('/prestamos', (req, res) => {
-  const { cliente, fechaPrestamo, fechaPago, interes, valorPrestamo } = req.body;
   console.log('Datos recibidos:', req.body);
-  
-  // Inserta el nuevo préstamo
+  const { cliente, fechaPrestamo, fechaPago, interes, valorPrestamo } = req.body;
+
+  if (!cliente || !cliente.id) {
+    return res.status(400).send('Cliente no proporcionado o ID de cliente faltante');
+  }
+
   db.run(
     "INSERT INTO prestamos (cliente_id, fecha_prestamo, fecha_pago, interes, valor_prestamo) VALUES (?, ?, ?, ?, ?)",
     [cliente.id, fechaPrestamo.toISOString(), fechaPago.toISOString(), interes, valorPrestamo],
@@ -130,6 +133,7 @@ app.post('/prestamos', (req, res) => {
     }
   );
 });
+
 
 // Ruta para obtener todos los préstamos
 app.get('/prestamos', (req, res) => {
