@@ -36,7 +36,7 @@ function ClientesPage() {
         alias,
         celular
       };
-      const response = await axios.post('http://localhost:5000/clientes', newClient);
+      const response = await axios.post('https://prestamos-app-veyf.vercel.app//clientes', newClient);
       setClientes([...clientes, response.data]); // Update the list with the new client
       setCedula('');
       setNombres('');
